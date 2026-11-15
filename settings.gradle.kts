@@ -54,3 +54,11 @@ include(":common")
 include(":dynamicfeature:installtime")
 include(":dynamicfeature:ondemand")
 include(":metroapp")
+
+// A runnable Hilt recipe with actual Gradle API/implementation boundaries.
+include(":modular_hilt:app")
+include(":modular_hilt:common")
+include(":modular_hilt:conversation:api")
+include(":modular_hilt:conversation:impl")
+include(":modular_hilt:profile:api")
+include(":modular_hilt:profile:impl")

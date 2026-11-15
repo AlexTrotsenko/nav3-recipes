@@ -571,7 +571,7 @@ here][22].
 [5]: https://medium.com/androiddevelopers/type-safe-navigation-for-compose-105325a97657
 [6]: https://github.com/android/nowinandroid/pull/1413
 [7]: https://github.com/android/nav3-recipes
-[8]: https://github.com/android/nav3-recipes/tree/main/app/src/main/java/com/example/nav3recipes/modular/hilt
+[8]: ../modular_hilt/README.md
 [9]: https://github.com/android/nav3-recipes?tab=readme-ov-file#passing-navigation-arguments-to-viewmodels
 [10]: https://github.com/android/nav3-recipes?tab=readme-ov-file#returning-results
 [11]: https://developer.android.com/guide/navigation/design/kotlin-dsl#custom

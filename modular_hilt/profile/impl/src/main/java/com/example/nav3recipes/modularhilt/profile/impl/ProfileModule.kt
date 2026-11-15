@@ -1,4 +1,4 @@
-package com.example.nav3recipes.modular.hilt
+package com.example.nav3recipes.modularhilt.profile.impl
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -16,28 +16,24 @@ import androidx.navigation3.runtime.deeplink.BackStackMatcher
 import androidx.navigation3.runtime.deeplink.DeepLinkUri
 import androidx.navigation3.runtime.deeplink.UriDeepLinkMatcher
 import androidx.navigation3.runtime.deeplink.withBackStack
+import com.example.nav3recipes.modularhilt.common.EntryProviderInstaller
+import com.example.nav3recipes.modularhilt.conversation.api.ConversationList
+import com.example.nav3recipes.modularhilt.profile.api.PROFILE_URI
+import com.example.nav3recipes.modularhilt.profile.api.Profile
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityRetainedComponent
 import dagger.multibindings.IntoSet
-import kotlinx.serialization.Serializable
 
-// API
-@Serializable
-object Profile : NavKey
-
-const val PROFILE_URI = "https://www.nav3recipes.com/profile"
-
-// IMPLEMENTATION
 @Module
 @InstallIn(ActivityRetainedComponent::class)
-object ProfileModule {
+internal object ProfileModule {
 
     @IntoSet
     @Provides
-    fun provideEntryProviderInstaller() : EntryProviderInstaller = {
-        entry<Profile>{
+    fun provideEntryProviderInstaller(): EntryProviderInstaller = {
+        entry<Profile> {
             ProfileScreen()
         }
     }

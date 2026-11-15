@@ -61,7 +61,7 @@ Note: If you find a bug or have a feature request for Material3 Adaptive Scenes 
 - **[Conditional navigation](app/src/main/java/com/example/nav3recipes/conditional)**: Switch to a different navigation flow when a condition is met. For example, for authentication or first-time user onboarding.
 
 ### Architecture
-- **[Hilt - Modularized navigation code](app/src/main/java/com/example/nav3recipes/modular/hilt)**: Demonstrates how to decouple navigation code into separate modules (uses Dagger/Hilt for DI).
+- **[Hilt - Real Gradle feature modules](modular_hilt/README.md)**: A separate runnable app with common navigation and conversation/profile API and implementation modules.
 - **[Koin - Modularized navigation code](app/src/main/java/com/example/nav3recipes/modular/koin)**: Demonstrates how to decouple navigation code into separate modules (uses Koin for DI).
 - **[Metro - Modularized navigation code](metroapp/src/main/java/com/example/nav3recipes/modular/metro)**: Demonstrates how to decouple navigation code into separate modules (uses Metro for DI).
 - **[Dynamic feature navigation](app/src/main/java/com/example/nav3recipes/dynamicfeature)**: Demonstrates how to integrate navigation code with Dynamic Feature Module.

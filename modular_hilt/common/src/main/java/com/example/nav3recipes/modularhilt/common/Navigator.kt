@@ -1,4 +1,4 @@
-package com.example.nav3recipes.modular.hilt
+package com.example.nav3recipes.modularhilt.common
 
 import android.content.Intent
 import androidx.compose.runtime.mutableStateListOf

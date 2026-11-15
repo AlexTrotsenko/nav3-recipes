@@ -1,4 +1,4 @@
-package com.example.nav3recipes.modular.hilt
+package com.example.nav3recipes.modularhilt.conversation.impl
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,29 +26,21 @@ import androidx.navigation3.runtime.deeplink.BackStackMatcher
 import androidx.navigation3.runtime.deeplink.DeepLinkUri
 import androidx.navigation3.runtime.deeplink.UriDeepLinkMatcher
 import androidx.navigation3.runtime.deeplink.withBackStack
-import com.example.nav3recipes.ui.theme.colors
+import com.example.nav3recipes.modularhilt.common.EntryProviderInstaller
+import com.example.nav3recipes.modularhilt.common.Navigator
+import com.example.nav3recipes.modularhilt.conversation.api.CONVERSATION_URI
+import com.example.nav3recipes.modularhilt.conversation.api.ConversationDetail
+import com.example.nav3recipes.modularhilt.conversation.api.ConversationList
+import com.example.nav3recipes.modularhilt.profile.api.Profile
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityRetainedComponent
 import dagger.multibindings.IntoSet
-import kotlinx.serialization.Serializable
 
-// API
-object ConversationList : NavKey
-
-@Serializable
-data class ConversationDetail(val id: Int) : NavKey {
-    val color: Color
-        get() = colors[id % colors.size]
-}
-
-const val CONVERSATION_URI = "https://www.nav3recipes.com/conversation"
-
-// IMPL
 @Module
 @InstallIn(ActivityRetainedComponent::class)
-object ConversationModule {
+internal object ConversationModule {
 
     @IntoSet
     @Provides
@@ -89,7 +81,7 @@ private fun ConversationListScreen(
         items(10) { index ->
             val conversationId = index + 1
             val conversationDetail = ConversationDetail(conversationId)
-            val backgroundColor = conversationDetail.color
+            val backgroundColor = conversationColor(conversationDetail.id)
             ListItem(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -119,7 +111,7 @@ private fun ConversationDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(conversationDetail.color)
+            .background(conversationColor(conversationDetail.id))
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -135,3 +127,10 @@ private fun ConversationDetailScreen(
         }
     }
 }
+
+private val colors = listOf(
+    Color(0xFFFFADAD), Color(0xFFFFD6A5), Color(0xFFFDFFB6), Color(0xFFCAFFBF),
+    Color(0xFF9BF6FF), Color(0xFFA0C4FF), Color(0xFFBDB2FF), Color(0xFFFFC6FF),
+)
+
+private fun conversationColor(id: Int): Color = colors[Math.floorMod(id, colors.size)]

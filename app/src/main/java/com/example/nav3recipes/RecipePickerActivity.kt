@@ -63,7 +63,6 @@ import com.example.nav3recipes.interop.InteropActivity
 import com.example.nav3recipes.lifecycleowner.LifecycleOwnerActivity
 import com.example.nav3recipes.material.listdetail.MaterialListDetailActivity
 import com.example.nav3recipes.material.supportingpane.MaterialSupportingPaneActivity
-import com.example.nav3recipes.modular.hilt.HiltDeepLinkActivity
 import com.example.nav3recipes.modular.koin.KoinDeepLinkActivity
 import com.example.nav3recipes.multiplestacks.MultipleStacksActivity
 import com.example.nav3recipes.navscenedecorator.ResponsiveNavigationSceneDecoratorActivity
@@ -123,7 +122,6 @@ private val recipes = listOf(
     Recipe("Lifecycle Owner", LifecycleOwnerActivity::class.java),
 
     Heading("Architecture"),
-    Recipe("Hilt - Modular Navigation", HiltDeepLinkActivity::class.java),
     Recipe("Koin - Modular Navigation", KoinDeepLinkActivity::class.java),
     Recipe("Dynamic Feature Module Navigation", DynamicFeatureActivity::class.java),
 

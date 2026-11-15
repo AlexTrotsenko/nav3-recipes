@@ -22,6 +22,6 @@ android {
 }
 
 dependencies {
-    api(libs.androidx.navigation3.runtime)
+    api(project(":modular_hilt:common"))
     implementation(libs.kotlinx.serialization.core)
 }

@@ -28,7 +28,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.dropUnlessResumed
-import com.example.nav3recipes.modularhilt.conversation.api.CONVERSATION_URI
+import com.example.nav3recipes.modularhilt.conversationdetail.api.CONVERSATION_URI
 import com.example.nav3recipes.modularhilt.profile.api.PROFILE_URI
 
 class HiltDeepLinkActivity : ComponentActivity() {

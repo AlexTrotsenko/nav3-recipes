@@ -33,10 +33,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.navigation3.runtime)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(project(":modular_hilt:common"))
-    implementation(project(":modular_hilt:conversationlist:api"))
     implementation(project(":modular_hilt:profile:api"))
 }

@@ -20,7 +20,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,12 +28,24 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.dropUnlessResumed
+import com.example.nav3recipes.modularhilt.common.AppNavKey
+import com.example.nav3recipes.modularhilt.common.Navigator
 import com.example.nav3recipes.modularhilt.conversationdetail.api.CONVERSATION_URI
+import com.example.nav3recipes.modularhilt.conversationdetail.api.ConversationDetail
+import com.example.nav3recipes.modularhilt.conversationlist.api.ConversationList
 import com.example.nav3recipes.modularhilt.profile.api.PROFILE_URI
+import com.example.nav3recipes.modularhilt.profile.api.Profile
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class HiltDeepLinkActivity : ComponentActivity() {
+    @Inject
+    lateinit var navigator: Navigator
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (savedInstanceState == null && handleDeepLink(intent)) return
         enableEdgeToEdge()
         setContent {
             MaterialTheme {
@@ -48,11 +60,7 @@ class HiltDeepLinkActivity : ComponentActivity() {
                     ) {
                         Button(
                             onClick = dropUnlessResumed {
-                                val intent = Intent(
-                                    this@HiltDeepLinkActivity,
-                                    HiltModularActivity::class.java,
-                                )
-                                startActivity(intent)
+                                navigator.goTo(ConversationList)
                             }
                         ) {
                             Text("Conversation List")
@@ -62,7 +70,7 @@ class HiltDeepLinkActivity : ComponentActivity() {
                         HorizontalDivider()
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        var conversationId by remember { mutableStateOf("") }
+                        var conversationId by rememberSaveable { mutableStateOf("") }
                         OutlinedTextField(
                             value = conversationId,
                             onValueChange = { conversationId = it },
@@ -74,13 +82,9 @@ class HiltDeepLinkActivity : ComponentActivity() {
                         Button(
                             enabled = conversationId.toIntOrNull() != null,
                             onClick = dropUnlessResumed {
-                                val intent = Intent(
-                                    this@HiltDeepLinkActivity,
-                                    HiltModularActivity::class.java,
-                                ).apply {
-                                    data = "$CONVERSATION_URI/$conversationId".toUri()
+                                conversationId.toIntOrNull()?.let { id ->
+                                    navigator.goTo(ConversationDetail(id))
                                 }
-                                startActivity(intent)
                             }
                         ) {
                             Text("Deep Link to Conversation")
@@ -92,13 +96,7 @@ class HiltDeepLinkActivity : ComponentActivity() {
 
                         Button(
                             onClick = dropUnlessResumed {
-                                val intent = Intent(
-                                    this@HiltDeepLinkActivity,
-                                    HiltModularActivity::class.java,
-                                ).apply {
-                                    data = PROFILE_URI.toUri()
-                                }
-                                startActivity(intent)
+                                navigator.goTo(Profile)
                             }
                         ) {
                             Text("Deep Link to Profile")
@@ -107,5 +105,29 @@ class HiltDeepLinkActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleDeepLink(intent)
+    }
+
+    private fun handleDeepLink(intent: Intent): Boolean {
+        if (intent.action != Intent.ACTION_VIEW) return false
+        val uri = intent.data ?: return false
+        val conversationUri = CONVERSATION_URI.toUri()
+        val key: AppNavKey = when {
+            uri == PROFILE_URI.toUri() -> Profile
+            uri.scheme == conversationUri.scheme &&
+                uri.authority == conversationUri.authority &&
+                uri.pathSegments.size == conversationUri.pathSegments.size + 1 &&
+                uri.pathSegments.dropLast(1) == conversationUri.pathSegments ->
+                uri.lastPathSegment?.toIntOrNull()?.let(::ConversationDetail)
+            else -> null
+        } ?: return false
+        navigator.goTo(key)
+        finish()
+        return true
     }
 }

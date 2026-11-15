@@ -20,6 +20,6 @@ Shows how to handle different types of deep link requests
 - `syntheticbackstack` - deep link between apps with a synthetic back stack using `DeepLinkMatcher.withBackStack` and correct "Up" navigation behavior
 
 ### 3. modular
-- [`hilt`](../../../../../../../../modular_hilt/README.md) - multi-module deep linking with Dagger/Hilt, contributing `BackStackMatcher` instances from feature modules to build synthetic back stacks from incoming `Intent`s
+- [`hilt`](../../../../../../../../modular_hilt/README.md) - multi-Activity baseline with Dagger/Hilt, routing incoming URI intents to feature Activities through serializable navigation keys and injected Activity launchers
 - [`koin`](../modular/koin) - multi-module deep linking with Koin, contributing `BackStackMatcher` instances from feature modules to build synthetic back stacks from incoming `Intent`s
 - [`metro`](/metroapp/src/main/java/com/example/nav3recipes/modular/metro) - multi-module deep linking with Metro, contributing `BackStackMatcher` instances from feature modules to build synthetic back stacks from incoming `Intent`s

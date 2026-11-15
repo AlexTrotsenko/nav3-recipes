@@ -1,23 +1,23 @@
-# Hybrid navigation with Hilt and real Gradle modules
+# Stage 1: multi-Activity navigation with Nav3-compatible keys
 
-This runnable app demonstrates gradual migration from multiple Activities to Compose Navigation 3 across eight Gradle modules. It uses the repository's existing settings, version catalog, repositories, and Gradle wrapper. Open the repository root in Android Studio; this folder is not a separate Gradle build.
+This runnable sample is the starting point for a gradual migration to Navigation 3. Every feature screen has its own `ComponentActivity` and uses Compose to render its UI. Screen navigation uses Android's Activity task stack. Navigation 3 is used only for the `NavKey` contract inherited by `AppNavKey`; this stage has no Nav3 display, entry registry, deep link matcher, or Compose back stack.
+
+The eight Gradle modules share the root settings, version catalog, repositories, and wrapper. Open the repository root in Android Studio and select `:modular_hilt:app` in an Android App run configuration. The application ID is `com.example.nav3recipes.modularhilt`, so the **Modular Hilt** app can be installed alongside the main recipes app.
 
 ```text
 modular_hilt/
-├── app/                 Android application, launcher, NavDisplay, start destination
-├── common/              AppNavKey, NavigatorFactory, Navigator, launcher bindings
+├── app/                 Application, launcher entry point, deep link demo/router
+├── common/              AppNavKey, Navigator, Activity launcher contracts
 ├── conversationlist/
 │   ├── api/             ConversationList key
-│   └── impl/            List screen, Nav3 entry, conversation deep link matcher
+│   └── impl/            List Activity, screen, Activity launcher binding
 ├── conversationdetail/
-│   ├── api/             ConversationDetail key and conversation URI constant
-│   └── impl/            Legacy detail Activity, screen, launcher binding
+│   ├── api/             ConversationDetail key and URI constant
+│   └── impl/            Detail Activity, screen, Activity launcher binding
 └── profile/
-    ├── api/             Profile route and URI constant
-    └── impl/            Screen, entry registration, deep link matcher
+    ├── api/             Profile key and URI constant
+    └── impl/            Profile Activity, screen, Activity launcher binding
 ```
-
-The application ID is `com.example.nav3recipes.modularhilt`, so this app can be installed alongside the original recipes app. Choose the `modular_hilt.app` run configuration (or create an Android App configuration for `:modular_hilt:app`) and launch **Modular Hilt**. This recipe runs from its own launcher rather than the main recipes app's picker.
 
 ## Dependencies enforced by Gradle
 
@@ -42,82 +42,73 @@ flowchart TD
     DI --> PA
     PI --> Common
     PI --> PA
-    PI --> LA
 ```
 
-Every box is a Gradle project prefixed with `:modular_hilt:`. The `common` module has no feature dependencies. API modules depend on `common` for `AppNavKey` and expose serializable navigation keys and URI constants. They never reference Activity classes, screen implementations, or feature implementation modules. Implementation modules depend on APIs, never on another implementation. Their Hilt modules are `internal` and their screen composables are private or internal to their implementation module.
+Every box is a Gradle project prefixed with `:modular_hilt:`. Feature APIs depend on `common` for `AppNavKey` and on Kotlin serialization for their serializable route keys. They contain no Activity references, Hilt bindings, or implementation dependencies. `common` has no feature dependencies.
 
-`conversationlist:impl` knows only the detail key from `conversationdetail:api`; it has no dependency on the detail implementation or `ConversationDetailActivity`. `conversationdetail:impl` depends on its own API, `profile:api`, and `common`. It does not depend on the list feature. Both list and detail navigate to `Profile` through `profile:api`. `profile:impl` depends on `conversationlist:api` to declare its deep link parent. These references produce no Gradle cycle.
+`conversationlist:impl` depends on `conversationdetail:api` and `profile:api`, so it can navigate without referencing either destination's Activity. `conversationdetail:impl` depends on `profile:api`. `profile:impl` depends only on its own API and `common`. Implementation modules never depend on each other. Each conversation screen keeps its small display palette local.
 
-Each conversation implementation keeps its small display palette local. Neither implementation shares display models or utilities with the other, and presentation details stay out of the public keys and common navigation module.
+The app includes all implementations to make their Hilt bindings available. Feature modules navigate only to feature keys; they have no navigation routes into the app module.
 
-The app includes all three feature implementations so Hilt can discover their bindings, but its Kotlin code only references APIs and common navigation infrastructure. Adding a feature requires including its implementation dependency; no central screen registry needs editing.
+## How navigation works
 
-## How the pieces meet at runtime
+`AppNavKey` extends Nav3's `NavKey` and Java `Serializable`. Feature keys also retain Kotlin serialization annotations. Java serialization transports the key through Activity Intent extras; the API identifies the destination without choosing its UI implementation.
 
-`AppNavKey` extends both Nav3's `NavKey` and Java `Serializable`: Kotlin serialization supports URI matching, and Java serialization transports keys in Activity Intent extras. The feature APIs name destinations without deciding whether they are Compose screens or Activities.
+Each feature implementation contributes a `LegacyActivityLauncher` to a Hilt map using `@IntoMap` and `@NavKeyClass`. Launchers create explicit Intents and attach the key under `Navigator.EXTRA_NAV_KEY`. The detail and profile Activities validate their expected keys with `intent.extractNavKey<T>()`.
 
-Hilt installs navigation bindings in `SingletonComponent`. The list and profile implementations contribute a `NavEntryInstaller` and a `BackStackMatcher` through `@IntoSet`. The detail implementation contributes only a `LegacyActivityLauncher` through `@IntoMap`, keyed by `@NavKeyClass(ConversationDetail::class)`. The conversation deep link matcher belongs to the list implementation because it combines the list parent key with the detail key using only their APIs. The common module declares empty multibindings so registries can also be empty.
+Every Activity directly injects `@ActivityScoped Navigator`. Hilt's `ActivityComponent` supplies the current Activity and inherits the launcher map from `SingletonComponent`. `navigator.goTo(key)` looks up the key's class and starts its registered Activity; an unregistered key raises an error identifying the missing launcher. `navigator.goBack()` finishes the current Activity. System Back uses the Android task stack as usual.
 
-`NavigatorFactory` creates a navigator for each Activity. The navigator holds that Activity only for its lifetime; singleton installers receive the current navigator as an argument rather than capturing an injected Activity. The host supplies its observable Nav3 stack to the factory. The legacy detail Activity supplies no stack.
-
-Every call to `navigator.goTo(key)` follows the same rules:
-
-| Destination and caller | Result |
-| --- | --- |
-| Key has a legacy launcher | Launch its Activity, passing the key in extras |
-| No legacy launcher, caller has a Nav3 stack | Push the key onto that stack |
-| No legacy launcher, caller has no Nav3 stack | Open a host through package-scoped `ACTION_OPEN_NAV3_HOST`, passing the key |
-
-`ConversationList` and `Profile` are Nav3 entries. `ConversationDetail` has only a legacy launcher, so it never enters `NavDisplay`. The list offers both conversation items and an **Open Profile** button. Both the legacy detail and Profile offer **Back** buttons using `navigator.goBack()`.
-
-The launcher is `HiltModularActivity`, initially showing `ConversationList`. Clicking a conversation and then **Open Profile** creates this Android task stack:
+`HiltDeepLinkActivity` is the MAIN/LAUNCHER entry point. Its **Conversation List** button opens the list through `Navigator`. Clicking a conversation, then **Open Profile**, creates:
 
 ```text
-HiltModularActivity [ConversationList]
-    -> ConversationDetailActivity (id)
-        -> HiltModularActivity [Profile]
+HiltDeepLinkActivity
+    -> ConversationListActivity
+        -> ConversationDetailActivity (ConversationDetail(id))
+            -> ProfileActivity (Profile)
 ```
 
-The second host starts with only `Profile`. Back finishes it, then Back finishes the legacy detail, revealing the original list. The host uses `singleTop`, not `singleTask`, and the navigator sets no `CLEAR_TOP` flags, so navigating from a legacy Activity preserves the Activities underneath. Navigating directly from the list to Profile instead pushes onto the existing host's Nav3 stack.
+Back unwinds Profile, Detail, then List, returning to the launcher demo. **Open Profile** on the list creates only `List -> Profile`. The explicit **Back** buttons finish Profile or Detail through the same navigator.
 
-## Deep links and saved state
+## Deep link examples and external URIs
 
-Use **Deep link examples** in the host to open `HiltDeepLinkActivity`. Its existing buttons demonstrate both feature URIs. On a fresh URI launch, the host uses the feature-contributed matchers to build the synthetic parent stack. A profile URI creates `[ConversationList, Profile]` in Nav3. A conversation URI leaves `[ConversationList]` in the host and launches the legacy detail Activity above it.
+The launcher demo's buttons navigate to the list, a detail key with the entered integer ID, or Profile. These button launches keep the demo underneath so Back returns to it.
 
-An extra key from a legacy Activity takes priority over a URI and is consumed after handling. New intents delivered to an existing top host append their destination through `Navigator`, which also routes legacy keys correctly. Unknown URIs leave the stack unchanged.
+`HiltDeepLinkActivity` also accepts external `ACTION_VIEW` Intents for:
 
-The host saves its serializable Nav3 keys in instance state and restores them on recreation without replaying the original Intent. The legacy detail reads its key from its own Intent. Navigators are recreated with their current Activity, so they do not retain destroyed Activity instances.
+- `https://www.nav3recipes.com/profile`
+- `https://www.nav3recipes.com/conversation/{id}`, where `{id}` parses to an `Int`
 
-## Build and try it
+A supported URI launches the destination through `Navigator` and finishes the router, so Back returns to whatever Activity was underneath it. There is no synthetic list parent on a cold URI launch. Non-VIEW launches display the demo UI; invalid or unsupported URIs also leave the demo visible. New VIEW intents delivered to an existing top demo Activity use the same routing logic. Recreation does not replay an already handled URI.
 
-Use the same Android SDK and JDK required by the root project (including Android SDK 37.1):
+## Build and run
+
+Use the same JDK and Android SDK as the root project, including Android SDK 37.1. The project still uses its existing Navigation 3 runtime snapshot for `NavKey`.
 
 ```sh
 ./gradlew :modular_hilt:app:assembleDebug
 ./gradlew :modular_hilt:app:installDebug
-adb shell am start -n com.example.nav3recipes.modularhilt/.HiltModularActivity
+adb shell am start -n com.example.nav3recipes.modularhilt/.HiltDeepLinkActivity
 ```
 
-Launch either deep link directly with an explicit component; this does not require website association or Android App Links verification:
+Explicit components let you test URI routing without website association or Android App Links verification:
 
 ```sh
 adb shell am start -W -a android.intent.action.VIEW \
   -d 'https://www.nav3recipes.com/conversation/7' \
-  -n com.example.nav3recipes.modularhilt/.HiltModularActivity
+  -n com.example.nav3recipes.modularhilt/.HiltDeepLinkActivity
 adb shell am start -W -a android.intent.action.VIEW \
   -d 'https://www.nav3recipes.com/profile' \
-  -n com.example.nav3recipes.modularhilt/.HiltModularActivity
+  -n com.example.nav3recipes.modularhilt/.HiltDeepLinkActivity
 ```
 
-With a device or emulator attached, run the integration tests:
+With a device or emulator attached:
 
 ```sh
 ./gradlew :modular_hilt:app:connectedDebugAndroidTest
 ```
 
-They check in-process list-to-profile navigation, legacy Activity launch, new-host identity and Android Back ordering, explicit Back buttons, both deep links from the helper, incoming key and URI intents, and stack restoration after recreation. Building the app also runs Hilt generation across the real module boundaries.
+The integration tests check Activity identities and key extras, system and explicit Back behavior, all demo buttons, external URIs, incoming intents, invalid URI handling, and navigation after Activity recreation.
 
-## Sample scope
+## Moving to the next stage
 
-This sample concentrates on Gradle boundaries and hybrid navigation. Host stack restoration uses Android instance state; durable navigation history beyond the lifetime of a task and domain-specific validation of incoming links are outside the sample. Keeping these eight modules together in this folder is for discoverability; the folder itself creates no dependency boundary.
+The route keys and `navigator.goTo(...)` call sites can stay the same when a later stage introduces Nav3 screens. That stage will change routing behind `Navigator` and replace selected Activity bindings with Nav3 entry registrations. This baseline deliberately leaves all screens in Activities so those migration changes can be reviewed separately.

@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
-import com.example.nav3recipes.modularhilt.common.NavigatorFactory
+import com.example.nav3recipes.modularhilt.common.Navigator
 import com.example.nav3recipes.modularhilt.common.extractNavKey
 import com.example.nav3recipes.modularhilt.conversationdetail.api.ConversationDetail
 import com.example.nav3recipes.modularhilt.profile.api.Profile
@@ -18,9 +18,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class ConversationDetailActivity : ComponentActivity() {
     @Inject
-    lateinit var navigatorFactory: NavigatorFactory
-
-    private val navigator by lazy { navigatorFactory.create(activity = this) }
+    lateinit var navigator: Navigator
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

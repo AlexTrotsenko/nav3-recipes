@@ -20,9 +20,10 @@ import androidx.lifecycle.compose.dropUnlessResumed
 internal fun ConversationListScreen(
     onConversationClicked: (Int) -> Unit,
     onProfileClicked: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
     ) {
         item {
             Button(

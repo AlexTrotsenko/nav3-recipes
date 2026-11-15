@@ -69,7 +69,7 @@ The [code recipes repository][7] demonstrates more nuanced use
 cases, including:
 
 -   [Bottom sheets][21] (instructions are provided in this guide)
--   [Modularized navigation code and injected destinations][8]
+-   [Multi-Activity baseline with modular route contracts and injected Activity launchers][8]
 -   [Using and passing arguments to ViewModels][9]
 -   [Returning results from a screen][10]
 
